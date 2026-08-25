@@ -1,10 +1,24 @@
+from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import get_settings
+from app.db import engine, Base
 from app.routers import datasets, configs, evaluate, results
 
+# Import all models to register them
+from app.models import Dataset, TestCase, RAGConfig, EvalRun, EvalResult
+
 settings = get_settings()
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Create tables on startup (for SQLite dev; use Alembic for PostgreSQL)
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+    yield
+
 
 app = FastAPI(
     title=settings.APP_NAME,
@@ -12,6 +26,7 @@ app = FastAPI(
     version="1.0.0",
     docs_url="/docs",
     redoc_url="/redoc",
+    lifespan=lifespan,
 )
 
 # CORS

@@ -4,7 +4,7 @@ from functools import lru_cache
 
 class Settings(BaseSettings):
     # Database
-    DATABASE_URL: str = "postgresql+asyncpg://postgres:postgres@localhost:5432/rag_eval"
+    DATABASE_URL: str = "sqlite+aiosqlite:///./rag_eval.db"
 
     # Judge LLM
     JUDGE_PROVIDER: str = "ollama"  # "ollama" or "openai"
