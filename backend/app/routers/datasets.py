@@ -53,7 +53,7 @@ async def create_dataset(data: DatasetCreate, db: AsyncSession = Depends(get_db)
             query=tc.query,
             expected_answer=tc.expected_answer,
             context_chunks=tc.context_chunks,
-            metadata_=tc.metadata,
+            extra_meta=tc.metadata,
         )
         db.add(test_case)
 
@@ -67,7 +67,7 @@ async def create_dataset(data: DatasetCreate, db: AsyncSession = Depends(get_db)
     dataset = result.scalar_one()
     return DatasetDetailResponse(
         **DatasetResponse.model_validate(dataset).model_dump(),
-        test_cases=[TestCaseResponse.model_validate(tc) for tc in dataset.test_cases],
+        test_cases=[TestCaseResponse.from_orm_model(tc) for tc in dataset.test_cases],
     )
 
 
@@ -82,7 +82,7 @@ async def get_dataset(dataset_id: int, db: AsyncSession = Depends(get_db)):
 
     return DatasetDetailResponse(
         **DatasetResponse.model_validate(dataset).model_dump(),
-        test_cases=[TestCaseResponse.model_validate(tc) for tc in dataset.test_cases],
+        test_cases=[TestCaseResponse.from_orm_model(tc) for tc in dataset.test_cases],
     )
 
 
@@ -127,7 +127,7 @@ async def upload_dataset_file(
             query=tc["query"],
             expected_answer=tc["expected_answer"],
             context_chunks=tc.get("context_chunks", []),
-            metadata_=tc.get("metadata", {}),
+            extra_meta=tc.get("metadata", {}),
         )
         db.add(test_case)
 
@@ -140,5 +140,5 @@ async def upload_dataset_file(
     dataset = result.scalar_one()
     return DatasetDetailResponse(
         **DatasetResponse.model_validate(dataset).model_dump(),
-        test_cases=[TestCaseResponse.model_validate(tc) for tc in dataset.test_cases],
+        test_cases=[TestCaseResponse.from_orm_model(tc) for tc in dataset.test_cases],
     )

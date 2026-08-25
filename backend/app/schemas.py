@@ -22,9 +22,19 @@ class TestCaseResponse(BaseModel):
     query: str
     expected_answer: str
     context_chunks: list[str]
-    metadata: dict
+    metadata: dict = Field(default_factory=dict)
 
     model_config = {"from_attributes": True}
+
+    @classmethod
+    def from_orm_model(cls, obj):
+        return cls(
+            id=obj.id,
+            query=obj.query,
+            expected_answer=obj.expected_answer,
+            context_chunks=obj.context_chunks or [],
+            metadata=obj.extra_meta or {},
+        )
 
 
 class DatasetResponse(BaseModel):

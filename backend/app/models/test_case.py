@@ -13,6 +13,6 @@ class TestCase(Base):
     query: Mapped[str] = mapped_column(Text, nullable=False)
     expected_answer: Mapped[str] = mapped_column(Text, nullable=False)
     context_chunks: Mapped[list] = mapped_column(JSONB, default=list)
-    metadata_: Mapped[dict] = mapped_column("metadata", JSONB, default=dict)
+    extra_meta: Mapped[dict] = mapped_column("extra_meta", JSONB, default=dict)
 
     dataset: Mapped["Dataset"] = relationship(back_populates="test_cases")
