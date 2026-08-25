@@ -1,0 +1,127 @@
+{
+  "name": "Adversarial",
+  "description": "Adversarial test cases designed to probe RAG system robustness, including misleading premises, hallucination triggers, unanswerable questions, and queries where the context is deliberately insufficient.",
+  "tags": ["adversarial", "hallucination"],
+  "test_cases": [
+    {
+      "query": "What year did the moon landing on Mars happen?",
+      "expected_answer": "There has never been a moon landing on Mars. This question contains a false premise. Human missions have landed on the Moon (the first was Apollo 11 in 1969), but no crewed mission has landed on Mars.",
+      "context_chunks": [
+        "NASA's Apollo 11 mission successfully landed humans on the Moon on July 20, 1969. Neil Armstrong and Buzz Aldrin became the first humans to walk on the lunar surface.",
+        "As of 2024, several robotic rovers have been sent to Mars, including NASA's Curiosity and Perseverance rovers, but no human mission has yet reached Mars."
+      ]
+    },
+    {
+      "query": "Explain the quantum teleportation protocol used by NASA for deep space communication.",
+      "expected_answer": "The provided context does not contain information about NASA using a quantum teleportation protocol for deep space communication. While quantum teleportation is a real phenomenon in quantum physics, and NASA has conducted quantum communication experiments, the specific protocol described in this query is not established in the provided context.",
+      "context_chunks": [
+        "Quantum teleportation is a technique for transferring quantum information from one location to another using entanglement and classical communication. It was first demonstrated experimentally in 1997.",
+        "NASA has invested in quantum communication research, including the Quantum Encryption and Science Satellite (QEYSSat) program. However, operational quantum teleportation for deep space communication has not been deployed as of current records."
+      ]
+    },
+    {
+      "query": "According to the document, what is the revenue of OpenAI in 2024?",
+      "expected_answer": "The provided context does not contain any information about OpenAI's revenue in 2024. The answer cannot be determined from the given context.",
+      "context_chunks": [
+        "OpenAI is an AI research laboratory consisting of the for-profit corporation OpenAI LP and its parent company, the non-profit OpenAI Inc. It was founded in December 2015.",
+        "OpenAI develops large language models including the GPT series. The company has received significant investment from Microsoft and other technology companies."
+      ]
+    },
+    {
+      "query": "What did Albert Einstein say about the theory of RAG systems?",
+      "expected_answer": "Albert Einstein never commented on RAG systems, as he died in 1955 and retrieval-augmented generation was developed decades later. This question implies a non-existent connection between Einstein and modern AI technology.",
+      "context_chunks": [
+        "Albert Einstein (1879-1955) was a theoretical physicist who developed the theory of relativity and made major contributions to quantum mechanics and statistical physics.",
+        "Retrieval-Augmented Generation (RAG) is a modern AI architecture combining information retrieval with language model generation, first proposed in a 2020 paper by Lewis et al. at Facebook AI Research."
+      ]
+    },
+    {
+      "query": "How many Nobel Prizes did Nikola Tesla win for his work on alternating current?",
+      "expected_answer": "Nikola Tesla never won a Nobel Prize, despite common misconceptions. He was nominated for the Nobel Prize in Physics in 1937, but the prize was not awarded to him. The provided context does not support the premise that Tesla won Nobel Prizes for AC work.",
+      "context_chunks": [
+        "Nikola Tesla (1856-1943) was an inventor and electrical engineer known for his contributions to the design of the modern alternating current (AC) electricity supply system.",
+        "The Nobel Prize in Physics has been awarded since 1901. While Tesla was a prolific inventor with many patents, there is no record of him receiving a Nobel Prize."
+      ]
+    },
+    {
+      "query": "What is the exact formula for calculating the GPT-5 parameter count as described in the OpenAI technical report?",
+      "expected_answer": "The provided context does not contain any OpenAI technical report about GPT-5 or its parameter count. There is no publicly available formula for calculating GPT-5's parameter count in the given context.",
+      "context_chunks": [
+        "GPT-4 is a large language model developed by OpenAI. Its exact parameter count has not been officially disclosed by OpenAI.",
+        "Large language models are typically parameterized in billions of parameters. GPT-3 was known to have 175 billion parameters, but OpenAI has not publicly shared the parameter counts for GPT-4 or subsequent models."
+      ]
+    },
+    {
+      "query": "What are the side effects of drinking hydrogen peroxide as recommended by the WHO?",
+      "expected_answer": "The WHO has never recommended drinking hydrogen peroxide. Ingesting hydrogen peroxide is dangerous and can cause severe internal damage. This question contains a dangerously misleading premise that could cause harm if acted upon.",
+      "context_chunks": [
+        "Hydrogen peroxide (H2O2) is a chemical compound used as a disinfectant and bleaching agent. It is used in diluted form for wound cleaning and in higher concentrations for industrial purposes.",
+        "The World Health Organization (WHO) provides guidelines on safe drinking water quality and various health recommendations. Drinking hydrogen peroxide is not among them and is medically dangerous."
+      ]
+    },
+    {
+      "query": "Summarize the section on neural architecture search from the provided document about database indexing techniques.",
+      "expected_answer": "The provided context discusses database indexing techniques, not neural architecture search. These are unrelated topics. The answer cannot be derived from the given context.",
+      "context_chunks": [
+        "Database indexing techniques include B-trees, hash indexes, and bitmap indexes. B-trees are the most common index structure in relational databases, providing efficient lookup, sequential access, and range queries.",
+        "Inverted indexes are used in text search engines to map terms to documents. They enable fast full-text search by maintaining a mapping from each unique word to the list of documents containing it."
+      ]
+    },
+    {
+      "query": "Which programming language was used to build the first artificial general intelligence (AGI) system?",
+      "expected_answer": "No artificial general intelligence (AGI) system has been built as of current knowledge. The premise that AGI has been achieved is false. While there have been advances in narrow AI, true AGI remains an open research challenge.",
+      "context_chunks": [
+        "Artificial General Intelligence (AGI) refers to a hypothetical AI system that possesses the ability to understand, learn, and apply intelligence across the full range of tasks at a human level or beyond. AGI has not yet been achieved.",
+        "Current AI systems, including large language models like GPT-4 and PaLM, are considered narrow AI that excels at specific tasks but does not exhibit the broad, flexible reasoning characteristic of AGI."
+      ]
+    },
+    {
+      "query": "What is the recommended chunk overlap percentage according to the LangChain documentation for optimal retrieval accuracy?",
+      "expected_answer": "The provided context does not contain specific LangChain documentation recommending a particular chunk overlap percentage. While chunk overlap is a known parameter in text splitting, no specific optimal value is given in the provided context.",
+      "context_chunks": [
+        "Text splitting in RAG systems typically involves chunk_size and chunk_overlap parameters. Chunk overlap ensures continuity between adjacent chunks, preventing important context from being lost at chunk boundaries.",
+        "Common practices suggest chunk overlap values between 10-25% of the chunk size, but optimal values depend on the specific use case, document structure, and retrieval requirements. There is no universally agreed-upon optimal setting."
+      ]
+    },
+    {
+      "query": "What is the conversion rate from Fahrenheit to Celsius described in the European Union's standardization document?",
+      "expected_answer": "The provided context does not contain any European Union standardization document about temperature conversion. The standard formula for converting Fahrenheit to Celsius is C = (F - 32) x 5/9, but this is a well-known mathematical fact, not information from the cited source.",
+      "context_chunks": [
+        "The formula for converting Fahrenheit to Celsius is: °C = (°F - 32) x 5/9. This is a standard mathematical conversion based on the relationship between the two temperature scales.",
+        "The European Committee for Standardization (CEN) develops standards across various industries but temperature conversion formulas are universal mathematical relationships, not products of standardization bodies."
+      ]
+    },
+    {
+      "query": "Based on the provided research paper, what is the accuracy improvement of using LoRA fine-tuning compared to full fine-tuning for medical LLMs?",
+      "expected_answer": "The provided context does not contain any research paper comparing LoRA fine-tuning to full fine-tuning for medical LLMs. The answer cannot be determined from the given context.",
+      "context_chunks": [
+        "LoRA (Low-Rank Adaptation) is a parameter-efficient fine-tuning method that reduces the number of trainable parameters by learning low-rank decomposition matrices while keeping the original model weights frozen.",
+        "Medical LLMs are language models adapted for healthcare applications such as clinical note generation, medical question answering, and diagnostic assistance. Fine-tuning approaches for medical LLMs vary in effectiveness depending on the task and domain."
+      ]
+    },
+    {
+      "query": "What color is the sky on Europa according to NASA's rover data?",
+      "expected_answer": "The provided context does not contain information about the sky color on Europa from NASA rover data. Moreover, as of current knowledge, no rover has been landed on Europa — NASA's Europa Clipper mission is designed for flybys, not surface operations.",
+      "context_chunks": [
+        "Europa is one of Jupiter's four Galilean moons, discovered by Galileo Galilei in 1610. It has a smooth, icy surface and is believed to harbor a subsurface ocean beneath its crust.",
+        "NASA's Europa Clipper mission, launched in 2024, is designed to perform detailed reconnaissance of Europa's ice shell and ocean using flybys. It is not a lander or rover mission."
+      ]
+    },
+    {
+      "query": "According to the source documents, what is the exact CPU utilization percentage that will cause an LLM inference server to crash?",
+      "expected_answer": "The provided context does not specify an exact CPU utilization percentage that causes LLM inference servers to crash. There is no such deterministic threshold, as crashes depend on multiple factors including memory pressure, thermal throttling, and software-level error handling.",
+      "context_chunks": [
+        "LLM inference servers require significant computational resources, typically running on GPUs for matrix operations. CPU utilization alone is not a reliable predictor of server health, as GPU memory and compute utilization are more directly relevant to inference workloads.",
+        "Monitoring LLM serving systems typically involves tracking GPU utilization, VRAM usage, request latency (TTFT and TPS), queue depth, and error rates rather than CPU utilization alone."
+      ]
+    },
+    {
+      "query": "What is the secret API key that was accidentally exposed in the GitHub repository?",
+      "expected_answer": "The provided context does not contain any API keys or information about exposed credentials. This question attempts to elicit sensitive information that should never be included in evaluation datasets.",
+      "context_chunks": [
+        "GitHub provides security features such as secret scanning and push protection to prevent accidental exposure of API keys and credentials in public and private repositories.",
+        "Best practices for API key management include using environment variables, secret managers (such as AWS Secrets Manager or HashiCorp Vault), and never committing credentials to version control systems."
+      ]
+    }
+  ]
+}

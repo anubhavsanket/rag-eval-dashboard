@@ -1,0 +1,165 @@
+{
+  "name": "General Knowledge",
+  "description": "Factual questions spanning science, history, geography, and technology to test basic retrieval and factuality of a RAG system.",
+  "tags": ["factuality", "retrieval"],
+  "test_cases": [
+    {
+      "query": "What is photosynthesis?",
+      "expected_answer": "Photosynthesis is the biological process by which green plants, algae, and some bacteria convert light energy (usually from the sun) into chemical energy stored in glucose. It occurs primarily in chloroplasts using chlorophyll, taking in carbon dioxide and water and producing glucose and oxygen.",
+      "context_chunks": [
+        "Photosynthesis is the process by which green plants and certain other organisms transform light energy into chemical energy. During photosynthesis in green plants, light energy is captured and used to convert water, carbon dioxide, and minerals into oxygen and energy-rich organic compounds.",
+        "The photosynthetic process occurs in the chloroplasts of plant cells, specifically within the thylakoid membranes where chlorophyll pigments absorb light primarily in the blue and red wavelengths."
+      ]
+    },
+    {
+      "query": "What is the capital of France?",
+      "expected_answer": "The capital of France is Paris.",
+      "context_chunks": [
+        "Paris is the capital and most populous city of France, with a population of over 2 million within the city proper and over 12 million in the metropolitan area. It is situated on the Seine River in the north-central part of the country."
+      ]
+    },
+    {
+      "query": "What is machine learning?",
+      "expected_answer": "Machine learning is a subset of artificial intelligence (AI) that enables systems to learn and improve from experience without being explicitly programmed. It focuses on developing algorithms that can access data, learn from it, and make predictions or decisions.",
+      "context_chunks": [
+        "Machine learning is an application of artificial intelligence (AI) that provides systems the ability to automatically learn and improve from experience without being explicitly programmed. Machine learning focuses on the development of computer programs that can access data and use it to learn for themselves.",
+        "The process of learning begins with observations or data, such as examples, direct experience, or instruction, in order to look for patterns in data and make better decisions in the future."
+      ]
+    },
+    {
+      "query": "Who painted the Mona Lisa?",
+      "expected_answer": "The Mona Lisa was painted by Leonardo da Vinci, an Italian Renaissance polymath, beginning around 1503-1506.",
+      "context_chunks": [
+        "The Mona Lisa is a half-length portrait painting by Italian artist Leonardo da Vinci. Considered an archetypal masterpiece of the Italian Renaissance, it has been described as the best known, most visited, most written about, and most parodied work of art in the world.",
+        "Leonardo da Vinci began painting the Mona Lisa around 1503 or 1504 in Florence, Italy. The painting is an oil on a white Lombardy poplar panel and measures 77 cm x 53 cm."
+      ]
+    },
+    {
+      "query": "What is the speed of light in a vacuum?",
+      "expected_answer": "The speed of light in a vacuum is approximately 299,792,458 meters per second (about 300,000 km/s or 186,000 miles per second).",
+      "context_chunks": [
+        "The speed of light in vacuum, commonly denoted c, is a universal physical constant that is exactly 299,792,458 metres per second. It is exact because, by international agreement, a metre is defined as the length of the path travelled by light in vacuum during a time interval of 1/299,792,458 of a second."
+      ]
+    },
+    {
+      "query": "What causes earthquakes?",
+      "expected_answer": "Earthquakes are caused primarily by the sudden release of energy in the Earth's lithosphere that creates seismic waves. Most earthquakes result from the movement of tectonic plates, where stress builds up along faults and is released as seismic energy when the rock fractures or slips.",
+      "context_chunks": [
+        "Earthquakes are caused by the sudden release of energy in the Earth's lithosphere that creates seismic waves. At the Earth's surface, earthquakes manifest themselves by shaking and sometimes displacement of the ground.",
+        "Most earthquakes are caused by tectonic movements within the Earth's crust. The boundaries between tectonic plates are typically the most active seismic zones. As plates move past, away from, or toward each other, stress accumulates along the boundaries until it exceeds the strength of the rocks, causing an earthquake."
+      ]
+    },
+    {
+      "query": "What is DNA and what does it do?",
+      "expected_answer": "DNA (deoxyribonucleic acid) is a molecule that carries the genetic instructions for the development, functioning, growth, and reproduction of all known living organisms and many viruses. It consists of two strands coiled around each other in a double helix structure.",
+      "context_chunks": [
+        "Deoxyribonucleic acid (DNA) is a molecule composed of two polynucleotide chains that coil around each other to form a double helix. It carries the genetic instructions for the development, functioning, growth and reproduction of all known organisms and many viruses.",
+        "DNA is made up of four chemical bases: adenine (A), guanine (G), cytosine (C), and thymine (T). The order of these bases determines the information available for building and maintaining an organism, much like letters of the alphabet appear in a certain order to form words and sentences."
+      ]
+    },
+    {
+      "query": "When did World War II end?",
+      "expected_answer": "World War II ended in 1945. Germany surrendered on May 8, 1945 (V-E Day), and Japan surrendered on September 2, 1945, after the atomic bombings of Hiroshima and Nagasaki.",
+      "context_chunks": [
+        "World War II ended on September 2, 1945, when Japanese representatives signed the Instrument of Surrender aboard the USS Missouri in Tokyo Bay. In Europe, the war ended on May 8, 1945 (V-E Day) with the unconditional surrender of Nazi Germany.",
+        "The final months of the war in the European theatre involved the invasion of Germany by Allied forces from both west and east, culminating in the Battle of Berlin and the death of Adolf Hitler on April 30, 1945."
+      ]
+    },
+    {
+      "query": "What is the periodic table?",
+      "expected_answer": "The periodic table is a tabular arrangement of chemical elements organized by their atomic number, electron configuration, and recurring chemical properties. Elements are arranged in rows (periods) and columns (groups) to show trends in their properties.",
+      "context_chunks": [
+        "The periodic table, also known as the periodic table of elements, is a tabular display of chemical elements, which are arranged by atomic number, electron configuration, and recurring chemical properties. The structure of the table shows periodic trends.",
+        "Dmitri Mendeleev is credited with creating the first widely recognized periodic table in 1869. He arranged elements in order of increasing atomic weight and noticed that elements with similar properties recurred at regular intervals."
+      ]
+    },
+    {
+      "query": "What is quantum computing?",
+      "expected_answer": "Quantum computing is a type of computation that harnesses quantum mechanical phenomena such as superposition and entanglement to process information. Unlike classical bits which are either 0 or 1, quantum bits (qubits) can exist in multiple states simultaneously, potentially solving certain problems exponentially faster.",
+      "context_chunks": [
+        "Quantum computing is a type of computation that makes use of quantum-mechanical phenomena such as superposition and entanglement. A quantum computer operates on qubits rather than classical bits, allowing it to process a vast amount of possibilities simultaneously.",
+        "While classical computers process information in bits (0 or 1), quantum computers use quantum bits or qubits that can exist in superposition of both states at once. This property, combined with entanglement, enables quantum computers to solve certain computational problems exponentially faster than classical computers."
+      ]
+    },
+    {
+      "query": "What is the theory of relativity?",
+      "expected_answer": "The theory of relativity, developed by Albert Einstein, encompasses two interrelated theories: special relativity (1905), which deals with the relationship between space and time for objects moving at constant speeds, and general relativity (1915), which describes gravity as the warping of spacetime by mass and energy.",
+      "context_chunks": [
+        "Albert Einstein published his theory of special relativity in 1905, which describes how space and time are linked for objects that are moving at a constant speed in a straight line. The theory established that the speed of light is constant regardless of the observer's motion.",
+        "Einstein's general theory of relativity, published in 1915, describes gravity as a geometric property of space and time, or spacetime. According to general relativity, the force of gravity arises from the curvature of spacetime caused by mass and energy."
+      ]
+    },
+    {
+      "query": "What are the primary colors of light?",
+      "expected_answer": "The primary colors of light are red, green, and blue (RGB). When combined, they produce white light. This additive color model is used in displays, screens, and lighting systems.",
+      "context_chunks": [
+        "The three primary colors of light are red, green, and blue (RGB). When all three are combined at full intensity, they produce white light. This is known as the additive color model, used in television screens, computer monitors, and other light-emitting displays.",
+        "In the additive color system, different combinations of red, green, and blue light can create the full spectrum of visible colors. For example, red and green light combine to produce yellow, while red and blue produce magenta."
+      ]
+    },
+    {
+      "query": "What is the significance of the Rosetta Stone?",
+      "expected_answer": "The Rosetta Stone is a granodiorite stele inscribed with three versions of a decree issued in 196 BC during the Ptolemaic dynasty. The three scripts — Egyptian hieroglyphs, Demotic script, and Ancient Greek — allowed scholars to decipher Egyptian hieroglyphs for the first time.",
+      "context_chunks": [
+        "The Rosetta Stone is a stele composed of granodiorite inscribed with three versions of a decree issued in Memphis, Egypt, in 196 BC during the Ptolemaic dynasty. The three scripts are hieroglyphic, Demotic, and Ancient Greek.",
+        "The importance of the Rosetta Stone lies in the fact that it provided the key to the modern understanding of Egyptian hieroglyphs. By comparing the Greek text, which was well understood, with the Egyptian hieroglyphs, Jean-François Champollion was able to decode the hieroglyphic script in 1822."
+      ]
+    },
+    {
+      "query": "What is climate change and what causes it?",
+      "expected_answer": "Climate change refers to long-term shifts in global temperatures and weather patterns. While natural factors can contribute, human activities — primarily the burning of fossil fuels — have been the dominant driver since the Industrial Revolution, increasing concentrations of greenhouse gases like CO2 in the atmosphere.",
+      "context_chunks": [
+        "Climate change is a significant, long-term shift in the average weather patterns of a region or the Earth as a whole. While climate has changed throughout Earth's history, the term usually refers to changes caused by human activities.",
+        "The burning of fossil fuels such as coal, oil, and natural gas releases carbon dioxide and other greenhouse gases into the atmosphere. These gases trap heat from the sun, leading to a warming effect known as the greenhouse effect, which is the primary driver of modern climate change."
+      ]
+    },
+    {
+      "query": "What is the internet and how does it work?",
+      "expected_answer": "The internet is a global network of interconnected computers and servers that communicate using standardized protocols (TCP/IP). Data is broken into packets, routed through various nodes, and reassembled at its destination, enabling worldwide communication and information sharing.",
+      "context_chunks": [
+        "The internet is a global system of interconnected computer networks that use the Internet Protocol Suite (TCP/IP) to link billions of devices worldwide. It is a network of networks that consists of millions of private, public, academic, business, and government networks.",
+        "Data transmitted over the internet is broken into smaller units called packets. Each packet travels independently through the network, being routed by intermediate devices such as routers and switches, before being reassembled at the destination. This packet-switching approach is fundamental to how the internet operates."
+      ]
+    },
+    {
+      "query": "What is evolution by natural selection?",
+      "expected_answer": "Evolution by natural selection is the process by which organisms with traits better suited to their environment tend to survive and reproduce more successfully, passing those favorable traits to subsequent generations. Over time, this leads to changes in populations and the development of new species.",
+      "context_chunks": [
+        "Natural selection is a mechanism of evolution, first articulated by Charles Darwin. Organisms with traits that are better adapted to their environment tend to survive and produce more offspring than those with less adapted traits.",
+        "Evolution by natural selection operates through four principles: variation (individuals within a population differ in traits), heredity (traits are passed from parents to offspring), differential reproduction (individuals with favorable traits produce more offspring), and time (changes accumulate over many generations)."
+      ]
+    },
+    {
+      "query": "What is the structure of an atom?",
+      "expected_answer": "An atom consists of a nucleus at the center, containing protons (positively charged) and neutrons (electrically neutral), surrounded by a cloud of electrons (negatively charged) that occupy various energy levels or orbitals.",
+      "context_chunks": [
+        "An atom is the smallest unit of ordinary matter that forms a chemical element. Every solid, liquid, gas, and plasma is composed of atoms. Atoms consist of a nucleus containing protons and neutrons, surrounded by an electron cloud.",
+        "Protons and neutrons are collectively known as nucleons. Protons carry a positive electrical charge, neutrons carry no charge, and electrons carry a negative electrical charge. The number of protons defines the element, while the number of neutrons determines the isotope."
+      ]
+    },
+    {
+      "query": "What is the Pythagorean theorem?",
+      "expected_answer": "The Pythagorean theorem states that in a right-angled triangle, the square of the length of the hypotenuse (the side opposite the right angle) is equal to the sum of the squares of the other two sides: a² + b² = c².",
+      "context_chunks": [
+        "The Pythagorean theorem is a fundamental relation in Euclidean geometry among the three sides of a right triangle. It states that the square of the hypotenuse (the side opposite the right angle) is equal to the sum of the squares of the other two sides.",
+        "If the legs of a right triangle have lengths a and b, and the hypotenuse has length c, then the Pythagorean theorem states that a² + b² = c². This theorem has numerous applications in mathematics, physics, engineering, and construction."
+      ]
+    },
+    {
+      "query": "What are the oceans of the world?",
+      "expected_answer": "The five oceans of the world are the Pacific Ocean, Atlantic Ocean, Indian Ocean, Southern (Antarctic) Ocean, and Arctic Ocean. The Pacific is the largest and deepest, while the Arctic is the smallest.",
+      "context_chunks": [
+        "The world's five oceans are the Pacific, Atlantic, Indian, Southern, and Arctic. The Pacific Ocean is the largest and deepest of these, covering more area than all of Earth's landmasses combined.",
+        "The Atlantic Ocean is the second-largest ocean, separating the Americas from Europe and Africa. The Indian Ocean is the third-largest, bounded by Asia to the north, Africa to the west, and Australia to the east."
+      ]
+    },
+    {
+      "query": "What is blockchain technology?",
+      "expected_answer": "Blockchain is a distributed, decentralized digital ledger technology that records transactions across multiple computers in such a way that the records cannot be altered retroactively. Each block contains a cryptographic hash of the previous block, a timestamp, and transaction data, forming an immutable chain.",
+      "context_chunks": [
+        "A blockchain is a distributed ledger technology that maintains a continuously growing list of records, called blocks, which are linked and secured using cryptographic hashes. Each block typically contains a hash of the previous block, a timestamp, and transaction data.",
+        "Blockchain technology enables secure, transparent, and tamper-resistant record-keeping without the need for a central authority. It was originally devised for Bitcoin but has since found applications in supply chain management, healthcare, voting systems, and many other domains."
+      ]
+    }
+  ]
+}
