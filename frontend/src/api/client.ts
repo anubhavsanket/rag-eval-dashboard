@@ -1,9 +1,11 @@
 const API_BASE = '/api/v1';
 
-async function request<T>(url: string, options?: RequestInit): Promise<T> {
+async function request<T>(url: string, options?: RequestInit & { isFormData?: boolean }): Promise<T> {
+  const headers: HeadersInit = options?.isFormData ? {} : { 'Content-Type': 'application/json' };
+  
   const response = await fetch(`${API_BASE}${url}`, {
     headers: {
-      'Content-Type': 'application/json',
+      ...headers,
       ...options?.headers,
     },
     ...options,
@@ -82,16 +84,23 @@ export const datasetsApi = {
   get: (id: number) => request<DatasetDetail>(`/datasets/${id}`),
   create: (data: { name: string; description?: string; tags?: string[]; test_cases: Array<{ query: string; expected_answer: string; context_chunks?: string[] }> }) =>
     request<DatasetDetail>('/datasets', { method: 'POST', body: JSON.stringify(data) }),
-  delete: (id: number) => request<void>(`/datasets/${id}`, { method: 'DELETE' }),
+  delete: (id: number) => request(`/datasets/${id}`, { method: 'DELETE' }),
+  upload: (formData: FormData) => {
+    // Don't set Content-Type for FormData - browser sets it with boundary
+    return request<DatasetDetail>('/datasets/upload', {
+      method: 'POST',
+      body: formData,
+      headers: {},
+    });
+  },
 };
 
 // Configs API
 export const configsApi = {
   list: () => request<RAGConfig[]>('/configs'),
-  get: (id: number) => request<RAGConfig>(`/configs/${id}`),
   create: (data: { name: string; description?: string; config: Record<string, unknown> }) =>
     request<RAGConfig>('/configs', { method: 'POST', body: JSON.stringify(data) }),
-  delete: (id: number) => request<void>(`/configs/${id}`, { method: 'DELETE' }),
+  delete: (id: number) => request(`/configs/${id}`, { method: 'DELETE' }),
 };
 
 // Evaluate API

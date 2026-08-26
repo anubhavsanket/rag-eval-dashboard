@@ -69,3 +69,14 @@ class JudgeLLM:
         )
         content = response.choices[0].message.content
         return json.loads(content)
+
+
+class MockJudge(JudgeLLM):
+    """Mock judge for testing without LLM calls."""
+
+    async def judge(self, system_prompt: str, user_prompt: str) -> dict:
+        return {
+            "score": 0.85,
+            "normalized_score": 0.85,
+            "reasoning": "Mock evaluation: consistently high score for testing.",
+        }

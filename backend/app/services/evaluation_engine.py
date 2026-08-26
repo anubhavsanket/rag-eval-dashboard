@@ -11,7 +11,9 @@ from app.models.rag_config import RAGConfig
 from app.models.eval_run import EvalRun
 from app.models.eval_result import EvalResult
 from app.services.pipeline_adapter import get_adapter, PipelineResponse
-from app.services.judge import JudgeLLM
+from app.services.judge import JudgeLLM, MockJudge
+from app.config import get_settings
+from datetime import datetime
 
 logger = logging.getLogger(__name__)
 
@@ -90,7 +92,14 @@ class EvalMetrics:
 
 class EvaluationEngine:
     def __init__(self, judge: JudgeLLM | None = None):
-        self.judge = judge or JudgeLLM()
+        if judge:
+            self.judge = judge
+        else:
+            settings = get_settings()
+            if settings.JUDGE_PROVIDER == "mock":
+                self.judge = MockJudge()
+            else:
+                self.judge = JudgeLLM()
 
     async def evaluate_single(
         self, query: str, expected_answer: str, pipeline_response: PipelineResponse
@@ -171,47 +180,46 @@ Context:
     async def run_evaluation(
         self, run_id: int, dataset_id: int, config_id: int, db: AsyncSession
     ):
-        """Run a full evaluation: query pipeline for each test case, evaluate, store results."""
+        """Run a full evaluation."""
+        logger.info(f"--- RUN {run_id} STARTING ---")
+        
         # Load run
         result = await db.execute(select(EvalRun).where(EvalRun.id == run_id))
         run = result.scalar_one()
         run.status = "running"
-        run.started_at = time.strftime("%Y-%m-%d %H:%M:%S")
         await db.commit()
+        logger.info(f"Run {run_id} status: running")
 
         try:
-            # Load dataset and test cases
-            result = await db.execute(
-                select(Dataset).where(Dataset.id == dataset_id)
-            )
+            # Load dataset
+            result = await db.execute(select(Dataset).where(Dataset.id == dataset_id))
             dataset = result.scalar_one()
+            logger.info(f"Run {run_id}: Loaded dataset '{dataset.name}'")
 
-            result = await db.execute(
-                select(TestCase).where(TestCase.dataset_id == dataset_id)
-            )
+            result = await db.execute(select(TestCase).where(TestCase.dataset_id == dataset_id))
             test_cases = result.scalars().all()
+            logger.info(f"Run {run_id}: Loaded {len(test_cases)} test cases")
 
             # Load config
-            result = await db.execute(
-                select(RAGConfig).where(RAGConfig.id == config_id)
-            )
+            result = await db.execute(select(RAGConfig).where(RAGConfig.id == config_id))
             rag_config = result.scalar_one()
+            logger.info(f"Run {run_id}: Loaded config '{rag_config.name}'")
 
             # Create adapter
             adapter = get_adapter(rag_config.config)
+            logger.info(f"Run {run_id}: Adapter created")
 
-            # Evaluate each test case
+            # Evaluate
             all_metrics = []
-            for tc in test_cases:
-                # Query the pipeline
+            for i, tc in enumerate(test_cases):
+                logger.info(f"Run {run_id}: Query {i+1}/{len(test_cases)} - {tc.query[:30]}...")
+                
                 pipeline_response = await adapter.query(tc.query)
+                logger.info(f"Run {run_id}: Query {i+1} - Pipeline response received")
 
-                # Evaluate
-                metrics = await self.evaluate_single(
-                    tc.query, tc.expected_answer, pipeline_response
-                )
+                metrics = await self.evaluate_single(tc.query, tc.expected_answer, pipeline_response)
+                logger.info(f"Run {run_id}: Query {i+1} - Evaluation metrics computed")
 
-                # Store result
                 eval_result = EvalResult(
                     run_id=run_id,
                     test_case_id=tc.id,
@@ -230,6 +238,7 @@ Context:
                 )
                 db.add(eval_result)
                 all_metrics.append(metrics)
+                logger.info(f"Run {run_id}: Query {i+1} - Result saved")
 
             # Compute summary
             n = len(all_metrics)
@@ -248,11 +257,12 @@ Context:
 
             run.summary = summary
             run.status = "completed"
-            run.completed_at = time.strftime("%Y-%m-%d %H:%M:%S")
+            run.completed_at = datetime.now()
+            logger.info(f"Run {run_id} status: completed")
 
         except Exception as e:
-            logger.error(f"Evaluation run {run_id} failed: {e}")
+            logger.error(f"Run {run_id} failed: {e}", exc_info=True)
             run.status = "failed"
-            run.summary = {"error": str(e)}
-
+        
         await db.commit()
+        logger.info(f"--- RUN {run_id} FINISHED ---")

@@ -4,12 +4,14 @@ import { Compare } from './pages/Compare';
 import { QueryDetail } from './pages/QueryDetail';
 import { Datasets } from './pages/Datasets';
 import { Evaluate } from './pages/Evaluate';
+import { Configs } from './pages/Configs';
 
 const navItems = [
   { to: '/', label: 'Dashboard' },
   { to: '/evaluate', label: 'Evaluate' },
   { to: '/compare', label: 'Compare' },
   { to: '/datasets', label: 'Datasets' },
+  { to: '/configs', label: 'Configs' },
 ];
 
 export default function App() {
@@ -52,6 +54,7 @@ export default function App() {
             <Route path="/evaluate" element={<Evaluate />} />
             <Route path="/compare" element={<Compare />} />
             <Route path="/datasets" element={<Datasets />} />
+            <Route path="/configs" element={<Configs />} />
             <Route path="/run/:runId" element={<QueryDetail />} />
             <Route path="/run/:runId/query/:resultId" element={<QueryDetail />} />
           </Routes>
