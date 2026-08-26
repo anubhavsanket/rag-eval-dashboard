@@ -1,10 +1,12 @@
 import asyncio
 import logging
+import threading
+from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
-from app.db import get_db, async_session
+from app.db import get_db
 from app.models.eval_run import EvalRun
 from app.models.eval_result import EvalResult
 from app.schemas import EvaluateRequest, EvalRunResponse, EvalResultResponse
@@ -15,25 +17,68 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/v1/evaluate", tags=["evaluate"])
 
 
-async def _run_evaluation_background(run_id: int, dataset_id: int, config_id: int):
-    """Background task to run evaluation."""
-    try:
-        logger.info(f"Background task starting for run {run_id}")
-        async with async_session() as db:
-            engine = EvaluationEngine()
-            await engine.run_evaluation(run_id, dataset_id, config_id, db)
-        logger.info(f"Background task completed for run {run_id}")
-    except Exception as e:
-        logger.error(f"Background evaluation failed for run {run_id}: {e}", exc_info=True)
+def _run_eval_sync(run_id: int, dataset_id: int, config_id: int):
+    """Synchronous helper that creates its own event loop and runs the evaluation.
 
-
-def _run_in_thread(run_id: int, dataset_id: int, config_id: int):
-    """Run evaluation in a background thread with its own event loop."""
-    loop = asyncio.new_event_loop()
+    Each thread gets its own event loop, engine, and session so there is no
+    cross-loop connection pool contention.  This is the only reliable approach
+    for running background async work from FastAPI when using uvicorn with
+    --reload (which uses a subprocess-based reloader that kills threads).
+    """
     try:
-        loop.run_until_complete(_run_evaluation_background(run_id, dataset_id, config_id))
-    finally:
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+
+        from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession as _AS
+        from app.config import get_settings
+
+        settings = get_settings()
+        thread_engine = create_async_engine(
+            settings.DATABASE_URL,
+            echo=False,
+            pool_size=2,
+        )
+        thread_session_factory = async_sessionmaker(
+            thread_engine, class_=_AS, expire_on_commit=False
+        )
+
+        async def _inner():
+            async with thread_session_factory() as db:
+                eval_engine = EvaluationEngine()
+                await eval_engine.run_evaluation(run_id, dataset_id, config_id, db)
+
+        loop.run_until_complete(_inner())
         loop.close()
+        thread_engine.dispose()
+
+    except Exception as e:
+        logger.error("Background evaluation failed for run %d: %s", run_id, e, exc_info=True)
+        # Mark run as failed so it doesn't stay stuck in pending/running
+        try:
+            loop2 = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop2)
+            from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession as _AS
+            from app.config import get_settings
+
+            settings = get_settings()
+            err_engine = create_async_engine(settings.DATABASE_URL, echo=False)
+            err_factory = async_sessionmaker(err_engine, class_=_AS, expire_on_commit=False)
+
+            async def _mark_failed():
+                async with err_factory() as db:
+                    result = await db.execute(select(EvalRun).where(EvalRun.id == run_id))
+                    run = result.scalar_one_or_none()
+                    if run:
+                        run.status = "failed"
+                        run.completed_at = datetime.now()
+                        run.summary = {"error": str(e), "total_queries": 0}
+                        await db.commit()
+
+            loop2.run_until_complete(_mark_failed())
+            loop2.close()
+            err_engine.dispose()
+        except Exception as ce:
+            logger.error("Failed to mark run %d as failed: %s", run_id, ce)
 
 
 @router.post("", response_model=EvalRunResponse, status_code=201)
@@ -42,8 +87,6 @@ async def start_evaluation(
     db: AsyncSession = Depends(get_db),
 ):
     """Start a new evaluation run."""
-    import threading
-
     run = EvalRun(
         dataset_id=data.dataset_id,
         config_id=data.config_id,
@@ -53,9 +96,15 @@ async def start_evaluation(
     await db.flush()
     await db.refresh(run)
 
-    # Run evaluation in a background thread (reliable with uvicorn reloader)
+    # Commit immediately so the background thread can reliably fetch the run
+    await db.commit()
+
+    logger.info("Created evaluation run #%d, starting background thread", run.id)
+
+    # Use a plain daemon thread.  Each thread gets its own engine/session/loop
+    # so there is no cross-loop pool contention.
     thread = threading.Thread(
-        target=_run_in_thread,
+        target=_run_eval_sync,
         args=(run.id, data.dataset_id, data.config_id),
         daemon=True,
     )

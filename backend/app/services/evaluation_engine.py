@@ -187,6 +187,7 @@ Context:
         result = await db.execute(select(EvalRun).where(EvalRun.id == run_id))
         run = result.scalar_one()
         run.status = "running"
+        run.started_at = datetime.now()
         await db.commit()
         logger.info(f"Run {run_id} status: running")
 
@@ -263,6 +264,8 @@ Context:
         except Exception as e:
             logger.error(f"Run {run_id} failed: {e}", exc_info=True)
             run.status = "failed"
+            run.completed_at = datetime.now()
+            run.summary = {"error": str(e), "total_queries": 0}
         
         await db.commit()
         logger.info(f"--- RUN {run_id} FINISHED ---")

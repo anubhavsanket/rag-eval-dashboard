@@ -1,6 +1,7 @@
 import csv
 import io
 import json
+from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import StreamingResponse
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -143,8 +144,15 @@ async def export_results(
         )
     else:
         data = [EvalResultResponse.model_validate(r).model_dump() for r in results]
+
+        # Helper to make dicts JSON serializable (converts datetimes to ISO strings)
+        def json_serializer(obj):
+            if isinstance(obj, datetime):
+                return obj.isoformat()
+            raise TypeError("Type %s not serializable" % type(obj))
+
         return StreamingResponse(
-            iter([json.dumps(data, indent=2)]),
+            iter([json.dumps(data, indent=2, default=json_serializer)]),
             media_type="application/json",
-            headers={"Content-Disposition": f"attachment; filename=eval_run_{run_id}.json"},
+            headers={"Content-Disposition": "attachment; filename=eval_run_%d.json" % run_id},
         )
