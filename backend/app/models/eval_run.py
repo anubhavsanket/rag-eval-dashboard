@@ -1,7 +1,8 @@
+from __future__ import annotations
 from datetime import datetime
 from sqlalchemy import String, ForeignKey, DateTime, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy.dialects.postgresql import JSONB
+from app.db_types import JSONVariant as JSONB
 
 from app.db import Base
 
@@ -12,6 +13,9 @@ class EvalRun(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     dataset_id: Mapped[int] = mapped_column(ForeignKey("datasets.id"))
     config_id: Mapped[int] = mapped_column(ForeignKey("rag_configs.id"))
+    sweep_id: Mapped[int | None] = mapped_column(
+        ForeignKey("eval_sweeps.id", ondelete="SET NULL"), nullable=True
+    )
     status: Mapped[str] = mapped_column(String(20), default="pending")
     summary: Mapped[dict] = mapped_column(JSONB, default=dict)
     started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
@@ -22,4 +26,7 @@ class EvalRun(Base):
 
     dataset: Mapped["Dataset"] = relationship()
     config: Mapped["RAGConfig"] = relationship()
-    results: Mapped[list["EvalResult"]] = relationship(back_populates="run")
+    sweep: Mapped[EvalSweep | None] = relationship(back_populates="runs")
+    results: Mapped[list["EvalResult"]] = relationship(
+        back_populates="run", cascade="all, delete-orphan"
+    )

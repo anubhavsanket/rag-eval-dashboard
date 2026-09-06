@@ -52,6 +52,7 @@ export interface EvalRun {
   id: number;
   dataset_id: number;
   config_id: number;
+  sweep_id: number | null;
   status: string;
   summary: Record<string, unknown>;
   started_at: string | null;
@@ -73,6 +74,9 @@ export interface EvalResult {
     hallucination: number;
     details: Record<string, unknown>;
   };
+  failure_category: string;
+  root_cause: string;
+  estimated_cost_usd: number;
   latency_ms: number | null;
   tokens_used: number | null;
   created_at: string;
@@ -126,4 +130,15 @@ export const resultsApi = {
   exportResults: (runId: number, format: string = 'json') => {
     window.open(`${API_BASE}/results/export?run_id=${runId}&format=${format}`, '_blank');
   },
+  getRecommendations: (runId: number) =>
+    request<{ run_id: number; recommendations: string[] }>(`/results/recommendations?run_id=${runId}`),
+};
+
+// Sweeps API
+export const sweepsApi = {
+  list: () => request<{ id: number; name: string; description: string | null; dataset_id: number; status: string; run_ids: number[]; summary: Record<string, unknown>; created_at: string; completed_at: string | null }[]>('/evaluate/sweep'),
+  get: (sweepId: number) => request<{ id: number; name: string; description: string | null; dataset_id: number; status: string; run_ids: number[]; summary: Record<string, unknown>; created_at: string; completed_at: string | null }>(`/evaluate/sweep/${sweepId}`),
+  getRuns: (sweepId: number) => request<Array<{ id: number; dataset_id: number; config_id: number; status: string; summary: Record<string, unknown>; created_at: string; completed_at: string | null }>>(`/evaluate/sweep/${sweepId}/runs`),
+  start: (data: { name: string; description?: string; dataset_id: number; config_ids: number[] }) =>
+    request<{ id: number; name: string; description: string | null; dataset_id: number; status: string; run_ids: number[]; summary: Record<string, unknown>; created_at: string; completed_at: string | null }>('/evaluate/sweep', { method: 'POST', body: JSON.stringify(data) }),
 };

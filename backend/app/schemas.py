@@ -1,5 +1,5 @@
-from datetime import datetime
 from pydantic import BaseModel, Field
+from datetime import datetime
 
 
 # Dataset schemas
@@ -80,6 +80,7 @@ class EvalRunResponse(BaseModel):
     id: int
     dataset_id: int
     config_id: int
+    sweep_id: int | None = None
     status: str
     summary: dict
     started_at: datetime | None
@@ -97,6 +98,9 @@ class EvalResultResponse(BaseModel):
     answer: str
     retrieved_chunks: list[dict]
     scores: dict
+    failure_category: str = "none"
+    root_cause: str = "none"
+    estimated_cost_usd: float = 0.0
     latency_ms: int | None
     tokens_used: int | None
     created_at: datetime
@@ -108,3 +112,29 @@ class EvalResultResponse(BaseModel):
 class CompareResponse(BaseModel):
     runs: list[EvalRunResponse]
     per_query_comparison: list[dict]
+
+
+# Sweep schemas
+class SweepConfigRequest(BaseModel):
+    config_ids: list[int]
+
+
+class SweepCreate(BaseModel):
+    name: str
+    description: str | None = None
+    dataset_id: int
+    config_ids: list[int]
+
+
+class SweepResponse(BaseModel):
+    id: int
+    name: str
+    description: str | None
+    dataset_id: int
+    status: str
+    run_ids: list[int]
+    summary: dict
+    created_at: datetime
+    completed_at: datetime | None
+
+    model_config = {"from_attributes": True}

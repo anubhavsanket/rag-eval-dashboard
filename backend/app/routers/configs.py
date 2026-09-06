@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+from sqlalchemy import select, func
 
 from app.db import get_db
 from app.models.rag_config import RAGConfig
@@ -43,4 +43,17 @@ async def delete_config(config_id: int, db: AsyncSession = Depends(get_db)):
     config = result.scalar_one_or_none()
     if not config:
         raise HTTPException(status_code=404, detail="Config not found")
+
+    # Refuse to delete configs that have evaluation history.
+    from app.models.eval_run import EvalRun
+    result = await db.execute(
+        select(func.count()).select_from(EvalRun).where(EvalRun.config_id == config_id)
+    )
+    run_count = result.scalar_one()
+    if run_count > 0:
+        raise HTTPException(
+            status_code=409,
+            detail=f"Cannot delete config: {run_count} evaluation run(s) reference it. Delete those runs first.",
+        )
+
     await db.delete(config)

@@ -92,6 +92,20 @@ async def delete_dataset(dataset_id: int, db: AsyncSession = Depends(get_db)):
     dataset = result.scalar_one_or_none()
     if not dataset:
         raise HTTPException(status_code=404, detail="Dataset not found")
+
+    # Refuse to delete datasets that have evaluation history — runs reference
+    # the dataset and its test cases via FKs, so deleting would corrupt history.
+    from app.models.eval_run import EvalRun
+    result = await db.execute(
+        select(func.count()).select_from(EvalRun).where(EvalRun.dataset_id == dataset_id)
+    )
+    run_count = result.scalar_one()
+    if run_count > 0:
+        raise HTTPException(
+            status_code=409,
+            detail=f"Cannot delete dataset: {run_count} evaluation run(s) reference it. Delete those runs first.",
+        )
+
     await db.delete(dataset)
 
 

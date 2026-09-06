@@ -1,6 +1,6 @@
 from sqlalchemy import String, Text, ForeignKey, Integer
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy.dialects.postgresql import JSONB
+from app.db_types import JSONVariant as JSONB
 
 from app.db import Base
 

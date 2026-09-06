@@ -5,10 +5,12 @@ import { QueryDetail } from './pages/QueryDetail';
 import { Datasets } from './pages/Datasets';
 import { Evaluate } from './pages/Evaluate';
 import { Configs } from './pages/Configs';
+import { Sweeps } from './pages/Sweeps';
 
 const navItems = [
   { to: '/', label: 'Dashboard' },
   { to: '/evaluate', label: 'Evaluate' },
+  { to: '/sweeps', label: 'Sweeps' },
   { to: '/compare', label: 'Compare' },
   { to: '/datasets', label: 'Datasets' },
   { to: '/configs', label: 'Configs' },
@@ -52,6 +54,7 @@ export default function App() {
           <Routes>
             <Route path="/" element={<Dashboard />} />
             <Route path="/evaluate" element={<Evaluate />} />
+            <Route path="/sweeps" element={<Sweeps />} />
             <Route path="/compare" element={<Compare />} />
             <Route path="/datasets" element={<Datasets />} />
             <Route path="/configs" element={<Configs />} />

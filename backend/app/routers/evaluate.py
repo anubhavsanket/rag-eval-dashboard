@@ -49,7 +49,7 @@ def _run_eval_sync(run_id: int, dataset_id: int, config_id: int):
 
         loop.run_until_complete(_inner())
         loop.close()
-        thread_engine.dispose()
+        thread_engine.sync_engine.dispose()
 
     except Exception as e:
         logger.error("Background evaluation failed for run %d: %s", run_id, e, exc_info=True)
@@ -76,7 +76,7 @@ def _run_eval_sync(run_id: int, dataset_id: int, config_id: int):
 
             loop2.run_until_complete(_mark_failed())
             loop2.close()
-            err_engine.dispose()
+            err_engine.sync_engine.dispose()
         except Exception as ce:
             logger.error("Failed to mark run %d as failed: %s", run_id, ce)
 
@@ -126,6 +126,9 @@ async def get_run(run_id: int, db: AsyncSession = Depends(get_db)):
 @router.get("/{run_id}/results", response_model=list[EvalResultResponse])
 async def get_run_results(run_id: int, db: AsyncSession = Depends(get_db)):
     """Get per-query results for a run."""
+    result = await db.execute(select(EvalRun).where(EvalRun.id == run_id))
+    if not result.scalar_one_or_none():
+        raise HTTPException(status_code=404, detail="Run not found")
     result = await db.execute(
         select(EvalResult).where(EvalResult.run_id == run_id).order_by(EvalResult.id)
     )

@@ -28,6 +28,16 @@ async def list_runs(
     return [EvalRunResponse.model_validate(r) for r in result.scalars().all()]
 
 
+@router.delete("/runs/{run_id}", status_code=204)
+async def delete_run(run_id: int, db: AsyncSession = Depends(get_db)):
+    """Delete an evaluation run and all its results."""
+    result = await db.execute(select(EvalRun).where(EvalRun.id == run_id))
+    run = result.scalar_one_or_none()
+    if not run:
+        raise HTTPException(status_code=404, detail="Run not found")
+    await db.delete(run)
+
+
 @router.get("/compare")
 async def compare_runs(
     ids: str = Query(..., description="Comma-separated run IDs"),
@@ -43,6 +53,15 @@ async def compare_runs(
     runs = result.scalars().all()
     if not runs:
         raise HTTPException(status_code=404, detail="No runs found")
+    # Validate ALL requested runs exist — partial comparisons silently hide
+    # missing data and are almost always a stale-ID bug on the client side.
+    found_ids = {r.id for r in runs}
+    missing = [rid for rid in run_ids if rid not in found_ids]
+    if missing:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Runs not found: {', '.join(str(m) for m in missing)}",
+        )
 
     # Fetch results for each run
     per_query = []
@@ -156,3 +175,22 @@ async def export_results(
             media_type="application/json",
             headers={"Content-Disposition": "attachment; filename=eval_run_%d.json" % run_id},
         )
+
+
+@router.get("/recommendations")
+async def get_recommendations(
+    run_id: int = Query(..., description="Run ID"),
+    db: AsyncSession = Depends(get_db),
+):
+    """Return configuration tuning recommendations based on failure patterns."""
+    from app.services.recommender import recommend
+
+    # Get failure distribution from the run's summary
+    result = await db.execute(select(EvalRun).where(EvalRun.id == run_id))
+    run = result.scalar_one_or_none()
+    if not run:
+        raise HTTPException(status_code=404, detail="Run not found")
+
+    failure_dist = run.summary.get("failure_distribution", {}) if run.summary else {}
+    recs = recommend(failure_dist)
+    return {"run_id": run_id, "recommendations": recs}

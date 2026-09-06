@@ -3,11 +3,11 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import get_settings
-from app.db import engine, Base
-from app.routers import datasets, configs, evaluate, results
+from app.db import get_engine, Base
+from app.routers import datasets, configs, evaluate, results, sweep
 
 # Import all models to register them
-from app.models import Dataset, TestCase, RAGConfig, EvalRun, EvalResult
+from app.models import Dataset, TestCase, RAGConfig, EvalRun, EvalResult, EvalSweep
 
 settings = get_settings()
 
@@ -15,6 +15,7 @@ settings = get_settings()
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Create tables on startup (use Alembic for production migrations)
+    engine = get_engine()
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
     yield
@@ -39,8 +40,12 @@ app.add_middleware(
 )
 
 # Routers
+# NOTE: sweep.router must be registered BEFORE evaluate.router so the literal
+# `/sweep` routes win over evaluate's `/{run_id}` path param (which would
+# otherwise match "sweep" and return 422 instead of routing to the sweep list).
 app.include_router(datasets.router)
 app.include_router(configs.router)
+app.include_router(sweep.router)
 app.include_router(evaluate.router)
 app.include_router(results.router)
 
