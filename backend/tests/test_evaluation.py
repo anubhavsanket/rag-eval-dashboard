@@ -1,11 +1,11 @@
 """End-to-end tests for the evaluation engine, failure classification,
 cost tracking, sweep orchestration, and recommendations.
 
-Tests verify PRD features:
-  §3.2  Deep Root Cause Analysis (six failure modes + NL root cause)
-  §3.1  Optimization Sweeps (API, leaderboard, summary)
-  §3.3  Cost Tracking (judge + pipeline blended estimates)
-  §3.3  Optimization Recommender (rule-based config suggestions)
+Tests verify the platform's key features:
+  Deep Root Cause Analysis (six failure modes + NL root cause)
+  Optimization Sweeps (API, leaderboard, summary)
+  Cost Tracking (judge + pipeline blended estimates)
+  Optimization Recommender (rule-based config suggestions)
 """
 import os
 import tempfile
@@ -90,7 +90,7 @@ def test_classify_healthy_answer():
 # ─── Summary Aggregation Tests ─────────────────────────────────────────────────
 
 def test_summary_includes_quality_score_and_failure_distribution():
-    """PRD Phase 1 §5: summary must have quality_score and failure_distribution."""
+    """Summary must have quality_score and failure_distribution."""
     from app.services.evaluation_engine import EvaluationEngine
 
     # Mock EvalMetrics objects
@@ -124,7 +124,7 @@ def test_summary_includes_quality_score_and_failure_distribution():
 # ─── Cost Tracking Tests ────────────────────────────────────────────────────────
 
 def test_cost_pricing_table_has_all_providers():
-    """PRD §4 architecture lists Ollama, OpenAI, Anthropic."""
+    """Architecture supports Ollama, OpenAI, and Anthropic judges."""
     assert "ollama" in PRICING
     assert "openai" in PRICING
     assert "anthropic" in PRICING
@@ -153,7 +153,7 @@ def test_cost_blended():
 # ─── Recommender Tests ─────────────────────────────────────────────────────────
 
 def test_recommender_fires_for_each_mode():
-    """Every PRD failure mode must produce at least one suggestion."""
+    """Every failure mode must produce at least one suggestion."""
     distributions = [
         {"retrieval_miss": 20, "none": 80},
         {"noisy_retrieval": 15, "none": 85},

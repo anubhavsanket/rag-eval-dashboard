@@ -1,7 +1,7 @@
 """Root cause analysis: classify every incorrect response into one of the six
-PRD failure modes and produce a single, human-readable root cause string.
+failure modes and produce a single, human-readable root cause string.
 
-Failure modes (see PRD §3.2):
+Failure modes:
 
 - ``retrieval_miss``:      Relevant info was not in the top-k chunks.
 - ``noisy_retrieval``:     Irrelevant chunks confused the LLM.
