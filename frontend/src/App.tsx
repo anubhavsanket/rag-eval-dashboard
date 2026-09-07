@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, NavLink } from 'react-router-dom';
 import { Dashboard } from './pages/Dashboard';
 import { Compare } from './pages/Compare';
+import { CompareBaseline } from './pages/CompareBaseline';
 import { QueryDetail } from './pages/QueryDetail';
 import { Datasets } from './pages/Datasets';
 import { Evaluate } from './pages/Evaluate';
@@ -12,6 +13,7 @@ const navItems = [
   { to: '/evaluate', label: 'Evaluate' },
   { to: '/sweeps', label: 'Sweeps' },
   { to: '/compare', label: 'Compare' },
+  { to: '/compare-baseline', label: 'A/B Compare' },
   { to: '/datasets', label: 'Datasets' },
   { to: '/configs', label: 'Configs' },
 ];
@@ -56,6 +58,7 @@ export default function App() {
             <Route path="/evaluate" element={<Evaluate />} />
             <Route path="/sweeps" element={<Sweeps />} />
             <Route path="/compare" element={<Compare />} />
+            <Route path="/compare-baseline" element={<CompareBaseline />} />
             <Route path="/datasets" element={<Datasets />} />
             <Route path="/configs" element={<Configs />} />
             <Route path="/run/:runId" element={<QueryDetail />} />

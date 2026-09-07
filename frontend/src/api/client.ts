@@ -2,7 +2,7 @@ const API_BASE = '/api/v1';
 
 async function request<T>(url: string, options?: RequestInit & { isFormData?: boolean }): Promise<T> {
   const headers: HeadersInit = options?.isFormData ? {} : { 'Content-Type': 'application/json' };
-  
+
   const response = await fetch(`${API_BASE}${url}`, {
     headers: {
       ...headers,
@@ -122,6 +122,10 @@ export const resultsApi = {
   compare: (ids: number[]) =>
     request<{ runs: EvalRun[]; per_query_comparison: Array<{ run_id: number; results: EvalResult[] }> }>(
       `/results/compare?ids=${ids.join(',')}`
+    ),
+  compareBaseline: (baselineId: number, candidateId: number) =>
+    request<{ baseline_id: number; candidate_id: number; delta_scores: Record<string, number> }>(
+      `/results/compare-baseline?baseline_id=${baselineId}&candidate_id=${candidateId}`
     ),
   getFailures: (runId: number, failureType: string = 'hallucination', threshold: number = 0.5) =>
     request<{ failures: Array<{ id: number; query: string; answer: string; failure_type: string; score: number; scores: Record<string, unknown> }>; total: number }>(

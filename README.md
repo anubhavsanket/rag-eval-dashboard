@@ -25,6 +25,7 @@ You've got a RAG pipeline. Maybe it's decent, maybe it's a black box. This tool 
 | **Cost Tracking** | Per-run and per-query cost estimates. Override rates via `COST_OVERRIDES` env var |
 | **Delete Protection** | Can't accidentally delete a dataset or config that has run history — 409 with the run count |
 | **Strict Compare** | `/results/compare?ids=1,2,3` returns 404 if any ID is missing — no silent partial results |
+| **A/B Comparison** | Compare baseline vs candidate runs for immediate regression/improvement detection |
 | **Production Observability** | p50/p95 latency, failure distribution, cost breakdown, quality score |
 | **Score Clamping** | Judge scores outside [0, 1] are clamped to the valid range so no metric ever distorts your dashboard |
 | **Recommendation Engine** | Deterministic rule-based recommender inspects failure patterns and emits concrete config tweaks — no LLM needed, same inputs always yield the same suggestions |
@@ -258,6 +259,7 @@ curl -X POST localhost:8000/api/v1/datasets/upload \
 | `GET` | `/api/v1/results/runs` | List all runs (optional `?status=` filter) |
 | `DELETE` | `/api/v1/results/runs/{id}` | Delete run + all its results |
 | `GET` | `/api/v1/results/compare` | Compare runs (404 if any ID missing) |
+| `GET` | `/api/v1/results/compare-baseline` | Run-level A/B comparison (delta metrics) |
 | `GET` | `/api/v1/results/failures` | Filter by failure type + threshold |
 | `GET` | `/api/v1/results/export` | Export CSV/JSON |
 | `GET` | `/api/v1/results/recommendations` | Tuning suggestions from failure patterns |
@@ -281,6 +283,7 @@ curl -X POST localhost:8000/api/v1/datasets/upload \
 | `/evaluate` | Start single runs, watch progress with live polling |
 | `/sweeps` | Create sweeps, view history, ranked leaderboard with medals |
 | `/compare` | Side-by-side run comparison (bar chart + per-query table with regression highlighting) |
+| `/compare-baseline` | A/B baseline vs candidate run comparison with delta table |
 | `/run/:id` / `/run/:id/query/:resultId` | Query details with failure chip, root cause, score breakdown, and chunk viewer |
 | `/datasets` | Manage datasets + upload JSON |
 | `/configs` | Manage RAG pipeline configs with one-click adapter templates |

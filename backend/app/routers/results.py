@@ -85,6 +85,50 @@ async def compare_runs(
     }
 
 
+@router.get("/compare-baseline")
+async def compare_baseline(
+    baseline_id: int = Query(..., description="Baseline run ID"),
+    candidate_id: int = Query(..., description="Candidate run ID"),
+    db: AsyncSession = Depends(get_db),
+):
+    """Compare a candidate run against a baseline run (run-level delta)."""
+    # Fetch runs
+    result = await db.execute(
+        select(EvalRun).where(EvalRun.id.in_([baseline_id, candidate_id]))
+    )
+    runs = result.scalars().all()
+    if len(runs) != 2:
+        raise HTTPException(status_code=404, detail="One or both runs not found")
+
+    baseline = next(r for r in runs if r.id == baseline_id)
+    candidate = next(r for r in runs if r.id == candidate_id)
+
+    b_sum = baseline.summary or {}
+    c_sum = candidate.summary or {}
+
+    def get_delta(key):
+        b_val = b_sum.get(key, 0)
+        c_val = c_sum.get(key, 0)
+        return c_val - b_val
+
+    # Quality score is the primary metric
+    delta_scores = {
+        "quality_score": get_delta("quality_score"),
+        "correctness": get_delta("avg_correctness"),
+        "faithfulness": get_delta("avg_faithfulness"),
+        "relevance": get_delta("avg_relevance"),
+        "hallucination": get_delta("avg_hallucination"),
+        "latency_ms": get_delta("avg_latency_ms"),
+        "cost_usd": get_delta("total_cost_usd"),
+    }
+
+    return {
+        "baseline_id": baseline_id,
+        "candidate_id": candidate_id,
+        "delta_scores": delta_scores,
+    }
+
+
 @router.get("/failures")
 async def get_failures(
     run_id: int = Query(..., description="Run ID to check"),
