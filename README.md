@@ -1,6 +1,6 @@
-# RAG Intelligence & Optimization Platform
+# RAG Evaluation Dashboard
 
-A self-hosted tool to evaluate, diagnose, and optimize Retrieval-Augmented Generation (RAG) pipelines. Run automated evaluations, get LLM-as-judge scores, perform deep root cause analysis, and run configuration sweeps to find what works best for your data.
+A self-hosted dashboard to evaluate, diagnose, and optimize Retrieval-Augmented Generation (RAG) pipelines. Run automated evaluations with LLM-as-judge scoring, perform deep root cause analysis across 6 failure modes, and run configuration sweeps to find what works best for your data. Full-stack: FastAPI backend + React frontend, Docker Compose deployment.
 
 ---
 
@@ -21,11 +21,27 @@ You've got a RAG pipeline. Maybe it's decent, maybe it's a black box. This tool 
 | **Root Cause Analysis** | 6 failure modes with readable explanations. When the judge errors out, you get a warning note so you know the analysis is incomplete |
 | **Optimization Sweeps** | POST `/api/v1/evaluate/sweep` with multiple configs → get a leaderboard sorted by quality score vs. latency/cost |
 | **Pluggable Judges** | Ollama (free, local), OpenAI, or Anthropic — swap without code changes |
+| **Pluggable Pipeline Adapters** | Mock (testing), HTTP (generic API), or LocalBrainNotes (Ollama + ChromaDB) — swap via config |
 | **Cost Tracking** | Per-run and per-query cost estimates. Override rates via `COST_OVERRIDES` env var |
 | **Delete Protection** | Can't accidentally delete a dataset or config that has run history — 409 with the run count |
 | **Strict Compare** | `/results/compare?ids=1,2,3` returns 404 if any ID is missing — no silent partial results |
 | **Production Observability** | p50/p95 latency, failure distribution, cost breakdown, quality score |
 | **Self-Hosted** | Docker Compose, your data, your infra |
+
+---
+
+## Tech Stack
+
+| Layer | Technology |
+|-------|-----------|
+| **Backend** | Python 3.12, FastAPI, SQLAlchemy 2.0 (async) |
+| **Database** | PostgreSQL 16 (production) / SQLite (testing) |
+| **Migrations** | Alembic (async, with asyncpg) |
+| **Judge LLMs** | Ollama (local), OpenAI, Anthropic — or MockJudge for testing |
+| **Frontend** | React 18, TypeScript, Vite 5, Tailwind CSS 3.4 |
+| **Charts** | Recharts 2.13 |
+| **Containerization** | Docker Compose (3 services: PostgreSQL, Backend, Frontend) |
+| **Testing** | pytest 8.3, pytest-asyncio, TestClient |
 
 ---
 
@@ -74,6 +90,18 @@ Every evaluated query gets a `failure_category` and `root_cause`:
 
 When judge calls fail, the root cause includes a note like:  
 `[Caution: LLM judge call(s) failed for faithfulness, correctness; scores for those metrics are unreliable]`
+
+---
+
+## Pipeline Adapters
+
+The evaluation engine connects to your RAG pipeline through a pluggable adapter interface. Swap without code changes via the config JSON:
+
+| Adapter | Config | Use Case |
+|---------|--------|----------|
+| **Mock** | `{"adapter_type": "mock"}` | Testing the evaluation pipeline without a real RAG system |
+| **HTTP** | `{"adapter_type": "http", "endpoint_url": "..."}` | Generic external RAG API (POST JSON, expects `answer`, `retrieved_chunks`, `tokens_used`) |
+| **LocalBrainNotes** | `{"adapter_type": "local_brain_notes", "base_url": "..."}` | Local Ollama + ChromaDB pipeline |
 
 ---
 
@@ -134,7 +162,10 @@ docker compose up --build
 - API docs: http://localhost:8000/docs
 - Frontend: http://localhost:5173
 
+> **Note:** The backend runs with `--reload` for hot-reload during development. The `./backend` directory is mounted as a volume so code changes take effect immediately.
+
 > **Note:** Production uses PostgreSQL. The test suite runs on SQLite for speed.
+> Database tables are auto-created on startup (FastAPI's `lifespan` event calls `Base.metadata.create_all`). For production schema management, use Alembic migrations (`alembic upgrade head`).
 
 ---
 
@@ -148,12 +179,14 @@ python -m venv venv
 source venv/bin/activate  # .\venv\Scripts\activate on Windows
 pip install -r requirements.txt
 
-# Set env vars (copy .env.example if you have one)
+# Set env vars (JUDGE_PROVIDER defaults to "mock" for dev without LLM)
 # DATABASE_URL, JUDGE_PROVIDER, JUDGE_MODEL
 # OPENAI_API_KEY or ANTHROPIC_API_KEY
 # COST_OVERRIDES='{"openai":{"gpt-4o-mini":{"input":0.15,"output":0.6}}}'
 
-alembic upgrade head
+# Tables are auto-created on startup. For production migrations:
+# alembic upgrade head
+
 uvicorn app.main:app --reload
 ```
 
@@ -175,12 +208,19 @@ Three ready-to-use datasets in `backend/seeds/`:
 - `domain_specific.json` — 20 RAG/ML technical questions  
 - `adversarial.json` — 15 hallucination-triggering queries
 
-Upload via the Datasets page or:
+Upload via the Datasets page using the Upload button, or:
 
 ```bash
+# Via POST /api/v1/datasets (specify test cases inline)
 curl -X POST localhost:8000/api/v1/datasets \
   -H "Content-Type: application/json" \
   -d @backend/seeds/general_knowledge.json
+
+# Via POST /api/v1/datasets/upload (file upload — supports both
+# wrapped {"name": "...", "test_cases": [...]} and raw array formats)
+curl -X POST localhost:8000/api/v1/datasets/upload \
+  -F "file=@backend/seeds/general_knowledge.json" \
+  -F "name=General Knowledge"
 ```
 
 ---
@@ -189,6 +229,8 @@ curl -X POST localhost:8000/api/v1/datasets \
 
 | Method | Endpoint | What It Does |
 |--------|----------|--------------|
+| `GET` | `/` | Root — app name, version, docs link |
+| `GET` | `/health` | Health check |
 | `POST` | `/api/v1/evaluate/sweep` | Start a sweep (creates runs per config) |
 | `GET` | `/api/v1/evaluate/sweep` | List all sweeps |
 | `GET` | `/api/v1/evaluate/sweep/{id}` | Get sweep + leaderboard |
@@ -202,7 +244,14 @@ curl -X POST localhost:8000/api/v1/datasets \
 | `GET` | `/api/v1/results/failures` | Filter by failure type + threshold |
 | `GET` | `/api/v1/results/export` | Export CSV/JSON |
 | `GET` | `/api/v1/results/recommendations` | Tuning suggestions from failure patterns |
+| `POST` | `/api/v1/datasets` | Create a dataset with test cases |
+| `POST` | `/api/v1/datasets/upload` | Upload dataset from JSON file |
+| `GET` | `/api/v1/datasets` | List all datasets |
+| `GET` | `/api/v1/datasets/{id}` | Get dataset details |
 | `DELETE` | `/api/v1/datasets/{id}` | Delete dataset (409 if referenced) |
+| `POST` | `/api/v1/configs` | Create a new RAG config |
+| `GET` | `/api/v1/configs` | List all configs |
+| `GET` | `/api/v1/configs/{id}` | Get config details |
 | `DELETE` | `/api/v1/configs/{id}` | Delete config (409 if referenced) |
 
 ---
@@ -232,13 +281,14 @@ cd backend && pytest tests/ -v
 - Summary aggregation (quality score, failure distribution)
 - Cost tracking (all providers, blended rates)
 - Recommender rules for each failure mode
-- SQLite schema creation
+- SQLite schema creation (all 6 tables)
 - Sweep E2E: create → validate → poll → verify leaderboard
 - Route conflict fix: `GET /evaluate/sweep` returns 200 (not 422)
 - Delete protection: 409 with run count, 204 after cleanup
 - Strict compare: 404 when any run ID missing
 - Judge-error caution notes in root cause
 - None-safe averages + correct percentiles (nearest-rank)
+- Deterministic MockJudge (0.85 fixed score) for tests without LLM calls
 
 ---
 
