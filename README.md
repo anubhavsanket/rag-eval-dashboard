@@ -26,6 +26,8 @@ You've got a RAG pipeline. Maybe it's decent, maybe it's a black box. This tool 
 | **Delete Protection** | Can't accidentally delete a dataset or config that has run history — 409 with the run count |
 | **Strict Compare** | `/results/compare?ids=1,2,3` returns 404 if any ID is missing — no silent partial results |
 | **Production Observability** | p50/p95 latency, failure distribution, cost breakdown, quality score |
+| **Score Clamping** | Judge scores outside [0, 1] are clamped to the valid range so no metric ever distorts your dashboard |
+| **Recommendation Engine** | Deterministic rule-based recommender inspects failure patterns and emits concrete config tweaks — no LLM needed, same inputs always yield the same suggestions |
 | **Self-Hosted** | Docker Compose, your data, your infra |
 
 ---
@@ -39,9 +41,9 @@ You've got a RAG pipeline. Maybe it's decent, maybe it's a black box. This tool 
 | **Migrations** | Alembic (async, with asyncpg) |
 | **Judge LLMs** | Ollama (local), OpenAI, Anthropic — or MockJudge for testing |
 | **Frontend** | React 18, TypeScript, Vite 5, Tailwind CSS 3.4 |
-| **Charts** | Recharts 2.13 |
+| **Charts** | Recharts 2.13 (line charts, bar charts) |
 | **Containerization** | Docker Compose (3 services: PostgreSQL, Backend, Frontend) |
-| **Testing** | pytest 8.3, pytest-asyncio, TestClient |
+| **Testing** | pytest 8.3, pytest-asyncio, TestClient, isolated SQLite per test |
 
 ---
 
@@ -54,23 +56,35 @@ You've got a RAG pipeline. Maybe it's decent, maybe it's a black box. This tool 
 │  │Dashboard │ │ Compare  │ │  Query   │ │  Dataset   │ │
 │  │          │ │  View    │ │  Details │ │  Manager   │ │
 │  └──────────┘ └──────────┘ └──────────┘ └────────────┘ │
+│  ┌──────────┐ ┌──────────┐ ┌──────────┐                │
+│  │  Sweeps  │ │ Evaluate │ │ Configs  │                │
+│  │ (Leader- │ │ (Start + │ │ (Adapter │                │
+│  │  board)  │ │  Poll)   │ │Templates)│                │
+│  └──────────┘ └──────────┘ └──────────┘                │
+│  Components: ScoreCard, MetricChart, QueryTable,        │
+│  ChunkViewer — with regression highlighting in compare  │
 └─────────────────────────┬───────────────────────────────┘
-                          │ REST API
+                          │ REST API (Vite proxy: /api → backend)
+                          │
 ┌─────────────────────────┴───────────────────────────────┐
 │  Backend (FastAPI + SQLAlchemy Async)                   │
 │  ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌────────────┐ │
 │  │ Dataset  │ │ Sweep    │ │ Evaluate │ │  RCA       │ │
 │  │ Manager  │ │Orchestrat│ │  Engine  │ │  Engine    │ │
 │  └──────────┘ └──────────┘ └──────────┘ └────────────┘ │
+│  ┌──────────┐ ┌──────────┐                               │
+│  │ Cost     │ │ Recommen-│                               │
+│  │ Tracker  │ │ dations  │                               │
+│  └──────────┘ └──────────┘                               │
 └──────────┬────────────┬────────────┬────────────────────┘
            │            │            │
       ┌────┴────┐ ┌─────┴─────┐ ┌────┴─────┐
       │PostgreSQL│ │  RAG      │ │  Judge   │
       │(results) │ │ Pipeline  │ │  LLM     │
       └─────────┘ │(external) │ │(Ollama/   │
-                   └───────────┘ │ OpenAI/   │
-                                  │Anthropic) │
-                                  └───────────┘
+                   └───────────┘ │ OpenAI/  │
+                                  │Anthropic)│
+                                  └──────────┘
 ```
 
 ---
@@ -103,6 +117,8 @@ The evaluation engine connects to your RAG pipeline through a pluggable adapter 
 | **HTTP** | `{"adapter_type": "http", "endpoint_url": "..."}` | Generic external RAG API (POST JSON, expects `answer`, `retrieved_chunks`, `tokens_used`) |
 | **LocalBrainNotes** | `{"adapter_type": "local_brain_notes", "base_url": "..."}` | Local Ollama + ChromaDB pipeline |
 
+The Configs page provides one-click templates for all three adapters so you don't need to remember the JSON schema.
+
 ---
 
 ## Cost Tracking
@@ -113,7 +129,7 @@ Costs are estimated in USD per 1M tokens:
 |----------|--------|------|
 | **Ollama** | Any local model | Free |
 | **OpenAI** | gpt-4o-mini, gpt-4o, gpt-4.1-mini, gpt-4.1 | ~$0.15–$10/M |
-| **Anthropic** | claude-3-5-haiku, claude-3-5-sonnet, claude-3-haiku | ~$0.25–$15/M |
+| **Anthropic** | claude-3-5-haiku-latest, claude-3-5-sonnet-latest, claude-3-haiku | ~$0.25–$15/M |
 
 Add to `summary.total_cost_usd` and each result's `estimated_cost_usd`. Override via env:
 
@@ -148,7 +164,7 @@ curl localhost:8000/api/v1/evaluate/sweep/1
 # ]}}
 ```
 
-The leaderboard is sorted by **quality score** (weighted: 40% correctness, 25% faithfulness, 20% relevance, 15% hallucination) — but you can see latency and cost right there to make the tradeoff call.
+The leaderboard is sorted by **quality score** (weighted: 40% correctness, 25% faithfulness, 20% relevance, 15% hallucination) — but you can see latency and cost right there to make the tradeoff call. The sweep runs each config in its own daemon thread with an isolated database session and event loop, so they never interfere with each other or the main API.
 
 ---
 
@@ -163,9 +179,8 @@ docker compose up --build
 - Frontend: http://localhost:5173
 
 > **Note:** The backend runs with `--reload` for hot-reload during development. The `./backend` directory is mounted as a volume so code changes take effect immediately.
-
-> **Note:** Production uses PostgreSQL. The test suite runs on SQLite for speed.
-> Database tables are auto-created on startup (FastAPI's `lifespan` event calls `Base.metadata.create_all`). For production schema management, use Alembic migrations (`alembic upgrade head`).
+>
+> **Note:** Production uses PostgreSQL. The test suite runs on SQLite for speed (each test gets its own temp database via the `isolated_db` fixture). Database tables are auto-created on startup (FastAPI's `lifespan` event calls `Base.metadata.create_all`). For production schema management, use Alembic migrations (`alembic upgrade head`).
 
 ---
 
@@ -197,6 +212,8 @@ cd frontend
 npm install
 npm run dev
 ```
+
+The frontend dev server proxies `/api` requests to the backend (default: `http://localhost:8000`), configurable via `VITE_API_URL`.
 
 ---
 
@@ -238,7 +255,7 @@ curl -X POST localhost:8000/api/v1/datasets/upload \
 | `POST` | `/api/v1/evaluate` | Start single evaluation run |
 | `GET` | `/api/v1/evaluate/{id}` | Get run status + summary |
 | `GET` | `/api/v1/evaluate/{id}/results` | Per-query results for a run |
-| `GET` | `/api/v1/results/runs` | List all runs |
+| `GET` | `/api/v1/results/runs` | List all runs (optional `?status=` filter) |
 | `DELETE` | `/api/v1/results/runs/{id}` | Delete run + all its results |
 | `GET` | `/api/v1/results/compare` | Compare runs (404 if any ID missing) |
 | `GET` | `/api/v1/results/failures` | Filter by failure type + threshold |
@@ -260,13 +277,51 @@ curl -X POST localhost:8000/api/v1/datasets/upload \
 
 | Route | What You'll See |
 |-------|-----------------|
-| `/` | Dashboard with run summaries, cost cards |
-| `/evaluate` | Start single runs, watch progress |
-| `/sweeps` | Create sweeps, view history, leaderboard |
-| `/compare` | Side-by-side run comparison |
-| `/run/:id` / `/run/:id/query/:resultId` | Query details with failure chip + root cause |
+| `/` | Dashboard with run summaries, metric trend charts, and cost cards |
+| `/evaluate` | Start single runs, watch progress with live polling |
+| `/sweeps` | Create sweeps, view history, ranked leaderboard with medals |
+| `/compare` | Side-by-side run comparison (bar chart + per-query table with regression highlighting) |
+| `/run/:id` / `/run/:id/query/:resultId` | Query details with failure chip, root cause, score breakdown, and chunk viewer |
 | `/datasets` | Manage datasets + upload JSON |
-| `/configs` | Manage RAG pipeline configs |
+| `/configs` | Manage RAG pipeline configs with one-click adapter templates |
+
+## Frontend Components
+
+| Component | Purpose |
+|-----------|---------|
+| **ScoreCard** | Displays a single metric as a colored card (percent, decimal, or integer format) |
+| **MetricChart** | Recharts wrapper for line and bar charts with configurable series |
+| **QueryTable** | Tabular view of per-query results with color-coded scores and optional regression highlighting |
+| **ChunkViewer** | Collapsible list of retrieved chunks with relevance scores |
+
+---
+
+## Implementation Details
+
+### Background Evaluation
+
+Evaluation runs execute in **daemon threads** with per-thread database engines, sessions, and event loops. This avoids cross-loop connection pool contention in uvicorn's `--reload` mode (which uses a subprocess-based reloader). Each thread:
+
+1. Creates its own `AsyncEngine` and `async_sessionmaker`
+2. Runs the evaluation engine in a fresh event loop
+3. Disposes the engine pool before closing the loop
+4. Catches exceptions and marks the run as `failed` with error details
+
+### Sweep Finalization
+
+Sweeps use SQLAlchemy's `populate_existing` execution option to refresh stale identity-map instances. Without this, the sweep's session would return its own cached (empty) summary objects instead of the summaries committed by the worker threads.
+
+### Judge Score Clamping
+
+All judge scores are clamped to `[0.0, 1.0]` via `_clamp_score()`. Judge LLMs occasionally return out-of-range values (e.g. 1.15 or a 0-100 scale) — clamping prevents distorted metrics and failure classification.
+
+### Database Compatibility
+
+The `JSONVariant` type in `db_types.py` uses PostgreSQL JSONB in production with a SQLite-compatible JSON fallback, so the same models work with both backends.
+
+### Recommendation Engine
+
+The `recommender` module is a **deterministic rule engine** — no LLM calls, no randomness. It inspects the dominant failure categories in a run and emits prioritized, concrete configuration suggestions. The same inputs always yield the same output, making it auditable.
 
 ---
 
@@ -278,7 +333,7 @@ cd backend && pytest tests/ -v
 
 **22 tests covering:**
 - All 6 failure modes + healthy answers
-- Summary aggregation (quality score, failure distribution)
+- Summary aggregation (quality score, failure distribution, p50/p95 latency)
 - Cost tracking (all providers, blended rates)
 - Recommender rules for each failure mode
 - SQLite schema creation (all 6 tables)
@@ -289,6 +344,8 @@ cd backend && pytest tests/ -v
 - Judge-error caution notes in root cause
 - None-safe averages + correct percentiles (nearest-rank)
 - Deterministic MockJudge (0.85 fixed score) for tests without LLM calls
+
+Each test gets its own isolated SQLite database via the `isolated_db` fixture — no state leaks between tests.
 
 ---
 
